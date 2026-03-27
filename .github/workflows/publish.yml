@@ -63,6 +63,14 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
 
+      - name: Create release branch
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b release/${{ steps.version.outputs.tag }}
+          git push origin release/${{ steps.version.outputs.tag }}
+
       - name: Create GitHub Release
         if: steps.check_tag.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
@@ -81,6 +89,7 @@ jobs:
             ### Links
 
             - [PyPI](https://pypi.org/project/paratro-sdk/${{ steps.version.outputs.version }}/)
+            - [Release branch](https://github.com/paratro/paratro-sdk-python/tree/release/${{ steps.version.outputs.tag }})
             - [Documentation](https://docs.paratro.com)
 
             ### Changes

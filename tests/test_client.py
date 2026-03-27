@@ -9,12 +9,12 @@ from paratro import (
     is_not_found,
     is_rate_limited,
     is_auth_error,
-    VERSION,
+    __version__,
 )
 
 
 def test_version():
-    assert VERSION == "1.1.3"
+    assert __version__  # non-empty string
 
 
 def test_config_sandbox():

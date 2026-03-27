@@ -18,9 +18,9 @@ from paratro.models import (
     TransferResponse,
     Wallet,
 )
-from paratro.version import VERSION
+from importlib.metadata import version as _pkg_version
 
-__version__ = VERSION
+__version__ = _pkg_version("paratro-sdk")
 
 __all__ = [
     "MPCClient",
@@ -42,5 +42,5 @@ __all__ = [
     "Transaction",
     "TransferResponse",
     "Wallet",
-    "VERSION",
+    "__version__",
 ]

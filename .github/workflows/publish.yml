@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "paratro/version.py"
+      - "pyproject.toml"
 
 jobs:
   release:
@@ -37,7 +37,7 @@ jobs:
       - name: Extract version
         id: version
         run: |
-          VERSION=$(grep 'VERSION' paratro/version.py | sed 's/.*"\(.*\)".*/\1/')
+          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=v${VERSION}" >> $GITHUB_OUTPUT
           echo "Detected version: ${VERSION}"

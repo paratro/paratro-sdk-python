@@ -27,7 +27,9 @@ from paratro.models import (
     TransferResponse,
     Wallet,
 )
-from paratro.version import VERSION
+from importlib.metadata import version as _pkg_version
+
+VERSION = _pkg_version("paratro-sdk")
 
 T = TypeVar("T")
 

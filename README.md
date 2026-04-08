@@ -269,7 +269,7 @@ def handle_webhook():
 | `transaction.confirmed` | Transaction fully confirmed (balance credited for deposits) |
 | `transaction.failed` | Transaction failed on-chain |
 
-**WebhookEvent fields:** `id`, `event_type`, `chain`, `txhash`, `type`, `status`, `direction`, `from_addr`, `to`, `symbol`, `amount`, `decimals`, `block_number`, `confirmations`, `required_confirmations`, `transaction_type`, `data`, `risk_score`
+**WebhookEvent fields:** `id`, `event_type`, `chain`, `txhash`, `transaction_type`, `direction`, `status`, `from_addr`, `to`, `symbol`, `amount`, `decimals`, `block_number`, `confirmations`, `required_confirmations`, `data`, `risk_score`
 
 ## Error Handling
 

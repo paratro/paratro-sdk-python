@@ -180,9 +180,9 @@ class WebhookEvent:
     event_type: str = ""  # See WebhookEventType
     chain: str = ""
     txhash: str = ""
-    type: str = ""  # transfer, erc20_transfer, trc20_transfer, spl_transfer
-    status: str = ""  # CONFIRMING, CONFIRMED, FAILED
+    transaction_type: str = ""  # TRANSFER
     direction: str = ""  # INBOUND, OUTBOUND
+    status: str = ""  # CONFIRMING, CONFIRMED, FAILED
     from_addr: str = ""  # "from" in JSON
     to: str = ""
     symbol: str = ""
@@ -191,6 +191,5 @@ class WebhookEvent:
     block_number: int = 0
     confirmations: int = 0
     required_confirmations: int = 0
-    transaction_type: str = ""  # TRANSFER, SWEEP, GAS_REFUEL
     data: str = ""
     risk_score: int = 0

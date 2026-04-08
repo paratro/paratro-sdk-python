@@ -116,8 +116,11 @@ class Transaction:
     to_address: str = ""
     token_symbol: str = ""
     amount: str = "0"
-    status: str = ""
+    status: str = ""  # CONFIRMING, CONFIRMED, FAILED, PENDING, SIGNED, BROADCAST
+    direction: str = ""  # IN, OUT
     tx_hash: str = ""
+    block_number: int = 0
+    confirmations: int = 0
     created_at: str = ""
 
 
@@ -158,3 +161,36 @@ class PaginatedResponse(Generic[T]):
     items: List[T] = field(default_factory=list)
     total: int = 0
     has_more: bool = False
+
+
+# ── Webhook ──
+
+
+class WebhookEventType:
+    """Webhook event type constants."""
+    TRANSACTION_CONFIRMING = "transaction.confirming"
+    TRANSACTION_CONFIRMED = "transaction.confirmed"
+    TRANSACTION_FAILED = "transaction.failed"
+
+
+@dataclass
+class WebhookEvent:
+    """Parsed webhook event payload."""
+    id: str = ""
+    event_type: str = ""  # See WebhookEventType
+    chain: str = ""
+    txhash: str = ""
+    type: str = ""  # transfer, erc20_transfer, trc20_transfer, spl_transfer
+    status: str = ""  # CONFIRMING, CONFIRMED, FAILED
+    direction: str = ""  # IN, OUT
+    from_addr: str = ""  # "from" in JSON
+    to: str = ""
+    symbol: str = ""
+    amount: str = "0"
+    decimals: int = 0
+    block_number: int = 0
+    confirmations: int = 0
+    required_confirmations: int = 0
+    transaction_type: str = ""  # TRANSFER, SWEEP, GAS_REFUEL
+    data: str = ""
+    risk_score: int = 0

@@ -17,7 +17,10 @@ from paratro.models import (
     Transaction,
     TransferResponse,
     Wallet,
+    WebhookEvent,
+    WebhookEventType,
 )
+from paratro.webhook import verify_signature, parse_event
 from importlib.metadata import version as _pkg_version
 
 __version__ = _pkg_version("paratro-sdk")
@@ -42,5 +45,9 @@ __all__ = [
     "Transaction",
     "TransferResponse",
     "Wallet",
+    "WebhookEvent",
+    "WebhookEventType",
+    "verify_signature",
+    "parse_event",
     "__version__",
 ]

@@ -223,9 +223,53 @@ for tx in resp.items:
     print(f"  {tx.tx_id}: {tx.transaction_type} {tx.amount} {tx.token_symbol} -> {tx.status}")
 ```
 
-**Transaction fields:** `tx_id`, `wallet_id`, `client_id`, `chain`, `transaction_type`, `from_address`, `to_address`, `token_symbol`, `amount`, `status`, `tx_hash`, `created_at`
+**Transaction fields:** `tx_id`, `wallet_id`, `client_id`, `chain`, `transaction_type`, `from_address`, `to_address`, `token_symbol`, `amount`, `status`, `direction`, `tx_hash`, `block_number`, `confirmations`, `created_at`
+
+**Transaction statuses:** `CONFIRMING`, `CONFIRMED`, `PENDING`, `SIGNED`, `BROADCAST`, `FAILED`
 
 **Transaction types:** `TRANSFER`, `X402_SIGN`, `X402_SETTLE`
+
+### Webhooks
+
+Verify webhook signatures and parse transaction lifecycle events.
+
+```python
+from paratro import verify_signature, parse_event, WebhookEventType
+
+# In your webhook handler (Flask example):
+@app.route("/webhook", methods=["POST"])
+def handle_webhook():
+    # 1. Verify signature
+    verify_signature(
+        secret="your_webhook_secret",
+        timestamp=request.headers["X-Paratro-Timestamp"],
+        payload=request.data,
+        signature=request.headers["X-Paratro-Signature"],
+    )
+
+    # 2. Parse event
+    event = parse_event(request.json)
+
+    # 3. Handle by event type
+    if event.event_type == WebhookEventType.TRANSACTION_CONFIRMING:
+        print(f"TX {event.txhash} confirming ({event.confirmations}/{event.required_confirmations})")
+    elif event.event_type == WebhookEventType.TRANSACTION_CONFIRMED:
+        print(f"TX {event.txhash} confirmed! Amount: {event.amount} {event.symbol}")
+    elif event.event_type == WebhookEventType.TRANSACTION_FAILED:
+        print(f"TX {event.txhash} failed")
+
+    return {"success": True}
+```
+
+**Event types:**
+
+| Event | Description |
+|---|---|
+| `transaction.confirming` | Transaction detected on-chain, awaiting confirmations |
+| `transaction.confirmed` | Transaction fully confirmed (balance credited for deposits) |
+| `transaction.failed` | Transaction failed on-chain |
+
+**WebhookEvent fields:** `id`, `event_type`, `chain`, `txhash`, `type`, `status`, `direction`, `from_addr`, `to`, `symbol`, `amount`, `decimals`, `block_number`, `confirmations`, `required_confirmations`, `transaction_type`, `data`, `risk_score`
 
 ## Error Handling
 
@@ -294,6 +338,7 @@ paratro-sdk-python/
 │   ├── config.py       # Environment configuration
 │   ├── errors.py       # APIError and helper functions
 │   ├── models.py       # Request/response dataclasses
+│   ├── webhook.py      # Webhook signature verification + event parsing
 │   └── version.py      # SDK version
 ├── tests/
 │   └── test_client.py  # Unit tests

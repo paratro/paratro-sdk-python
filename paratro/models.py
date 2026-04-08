@@ -117,7 +117,7 @@ class Transaction:
     token_symbol: str = ""
     amount: str = "0"
     status: str = ""  # CONFIRMING, CONFIRMED, FAILED, PENDING, SIGNED, BROADCAST
-    direction: str = ""  # IN, OUT
+    direction: str = ""  # INBOUND, OUTBOUND
     tx_hash: str = ""
     block_number: int = 0
     confirmations: int = 0
@@ -182,7 +182,7 @@ class WebhookEvent:
     txhash: str = ""
     type: str = ""  # transfer, erc20_transfer, trc20_transfer, spl_transfer
     status: str = ""  # CONFIRMING, CONFIRMED, FAILED
-    direction: str = ""  # IN, OUT
+    direction: str = ""  # INBOUND, OUTBOUND
     from_addr: str = ""  # "from" in JSON
     to: str = ""
     symbol: str = ""

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "paratro-sdk"
-version = "1.1.6"
+version = "1.2.0"
 description = "Official Python SDK for Paratro MPC Wallet Infrastructure"
 readme = "README.md"
 license = {text = "MIT"}

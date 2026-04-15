@@ -78,8 +78,6 @@ resp = client.list_transactions()
 for tx in resp.items:
     print(f"TX: {tx.tx_hash} {tx.amount} {tx.token_symbol} ({tx.status})")
 
-# 8. Clean up
-client.logout()
 ```
 
 ## Configuration
@@ -326,7 +324,7 @@ The SDK handles authentication automatically:
 2. The token is cached and reused for subsequent requests
 3. When the token approaches expiration (< 5 minutes remaining), it is automatically refreshed
 4. Token management is thread-safe for concurrent usage
-5. Call `client.logout()` to explicitly invalidate the token
+5. Tokens expire automatically; no explicit logout is needed
 
 ## Project Structure
 

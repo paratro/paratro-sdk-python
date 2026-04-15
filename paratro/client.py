@@ -49,8 +49,6 @@ class MPCClient:
         # Create a wallet
         wallet = client.create_wallet(CreateWalletRequest(wallet_name="My Wallet"))
 
-        # Clean up
-        client.logout()
     """
 
     def __init__(self, api_key: str, api_secret: str, config: Config) -> None:
@@ -93,17 +91,6 @@ class MPCClient:
             self._token = data["token"]
             self._token_expires_at = time.time() + data.get("expires_in", 3600)
             return self._token  # type: ignore[return-value]
-
-    def logout(self) -> None:
-        """Invalidate the current JWT token."""
-        if not self._token:
-            return
-        try:
-            self._request("POST", "/api/v1/auth/logout", body=None)
-        finally:
-            with self._token_lock:
-                self._token = None
-                self._token_expires_at = 0
 
     # ── Wallet ──
 

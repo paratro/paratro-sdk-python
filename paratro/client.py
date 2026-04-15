@@ -33,7 +33,7 @@ VERSION = _pkg_version("paratro-sdk")
 
 T = TypeVar("T")
 
-_TOKEN_REFRESH_BUFFER = 300  # Refresh 5 minutes before expiration
+_TOKEN_REFRESH_BUFFER = 120  # Refresh 2 minutes before expiration
 _HTTP_TIMEOUT = 30
 
 
@@ -89,7 +89,7 @@ class MPCClient:
             self._raise_for_error(resp)
             data = resp.json()
             self._token = data["token"]
-            self._token_expires_at = time.time() + data.get("expires_in", 3600)
+            self._token_expires_at = time.time() + data.get("expires_in", 900)
             return self._token  # type: ignore[return-value]
 
     # ── Wallet ──

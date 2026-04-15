@@ -109,7 +109,6 @@ def parse_event(data: dict) -> WebhookEvent:
         chain=data.get("chain", ""),
         txhash=data.get("txhash", ""),
         transaction_type=data.get("transaction_type", ""),
-        direction=data.get("direction", ""),
         status=data.get("status", ""),
         from_addr=data.get("from", ""),
         to=data.get("to", ""),
@@ -120,5 +119,6 @@ def parse_event(data: dict) -> WebhookEvent:
         confirmations=data.get("confirmations", 0),
         required_confirmations=data.get("required_confirmations", 0),
         data=data.get("data", ""),
-        risk_score=data.get("risk_score", 0),
+        risk_score=data.get("risk_score", ""),
+        risk_level=data.get("risk_level", ""),
     )

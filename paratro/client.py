@@ -22,9 +22,11 @@ from paratro.models import (
     ListAssetsRequest,
     ListTransactionsRequest,
     ListWalletsRequest,
+    ListWhitelistResponse,
     PaginatedResponse,
     Transaction,
     TransferResponse,
+    TransferWhitelistItem,
     Wallet,
 )
 from importlib.metadata import version as _pkg_version
@@ -181,6 +183,61 @@ class MPCClient:
         """Create a new transfer."""
         data = self._request("POST", "/api/v1/transfer", body=_to_body(req))
         return _from_dict(TransferResponse, data)
+
+    # ── Whitelist ──
+
+    def list_whitelist(self, chain: Optional[str] = None) -> ListWhitelistResponse:
+        """List whitelisted transfer addresses.
+
+        Args:
+            chain: Optional chain filter (e.g. "ETH", "BTC").
+
+        Returns:
+            ListWhitelistResponse with items and total count.
+        """
+        params: Dict[str, str] = {}
+        if chain:
+            params["chain"] = chain
+        data = self._request("GET", "/api/v1/whitelist", params=params)
+        items = [_from_dict(TransferWhitelistItem, item) for item in data.get("items", [])]
+        return ListWhitelistResponse(items=items, total=data.get("total", 0))
+
+    def add_whitelist(
+        self,
+        chain: str,
+        address: str,
+        mfa_code: str,
+        label: str = "",
+    ) -> TransferWhitelistItem:
+        """Add an address to the transfer whitelist.
+
+        Args:
+            chain: Blockchain network (e.g. "ETH", "BTC").
+            address: The address to whitelist.
+            mfa_code: MFA / 2FA verification code.
+            label: Optional human-readable label.
+
+        Returns:
+            The created TransferWhitelistItem.
+        """
+        body: Dict[str, Any] = {"chain": chain, "address": address, "mfa_code": mfa_code}
+        if label:
+            body["label"] = label
+        data = self._request("POST", "/api/v1/whitelist", body=body)
+        return _from_dict(TransferWhitelistItem, data)
+
+    def delete_whitelist(self, whitelist_id: str, mfa_code: str) -> None:
+        """Remove an address from the transfer whitelist.
+
+        Args:
+            whitelist_id: ID of the whitelist entry to remove.
+            mfa_code: MFA / 2FA verification code.
+        """
+        self._request(
+            "DELETE",
+            f"/api/v1/whitelist/{whitelist_id}",
+            body={"mfa_code": mfa_code},
+        )
 
     # ── Internal ──
 

@@ -175,21 +175,51 @@ class WebhookEventType:
 
 @dataclass
 class WebhookEvent:
-    """Parsed webhook event payload."""
-    id: str = ""
+    """Parsed webhook event payload (v2 schema, 26 fields)."""
+    event_id: str = ""
     event_type: str = ""  # See WebhookEventType
-    chain: str = ""
-    txhash: str = ""
-    transaction_type: str = ""  # INBOUND, OUTBOUND, SWEEP, GAS_REFUEL
+    event_time: str = ""
+    source_id: str = ""
+    wallet_id: str = ""
+    account_id: str = ""
     status: str = ""  # CONFIRMING, CONFIRMED, FAILED
-    from_addr: str = ""  # "from" in JSON
-    to: str = ""
+    transaction_type: str = ""  # INBOUND, OUTBOUND, SWEEP, GAS_REFUEL
+    chain: str = ""
+    network: str = ""
+    txhash: str = ""
+    block_number: int = 0
+    from_addr: str = ""  # "from" in JSON (reserved word in Python)
+    to_addr: str = ""    # "to" in JSON, renamed for consistency
     symbol: str = ""
+    contract_address: str = ""
     amount: str = "0"
     decimals: int = 0
-    block_number: int = 0
     confirmations: int = 0
     required_confirmations: int = 0
-    data: str = ""
-    risk_score: str = ""
+    created_at: str = ""
+    confirmed_at: Optional[str] = None
+    risk_checked: bool = False
+    risk_score: float = 0.0
     risk_level: str = ""
+    data: str = ""
+
+
+# ── Whitelist ──
+
+
+@dataclass
+class TransferWhitelistItem:
+    """A whitelisted transfer address."""
+    whitelist_id: str = ""
+    chain: str = ""
+    address: str = ""
+    label: str = ""
+    added_by: str = ""
+    created_at: str = ""
+
+
+@dataclass
+class ListWhitelistResponse:
+    """Response for listing whitelisted addresses."""
+    items: List[TransferWhitelistItem] = field(default_factory=list)
+    total: int = 0

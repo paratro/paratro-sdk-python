@@ -204,22 +204,25 @@ class WebhookEvent:
     data: str = ""
 
 
-# ── Whitelist ──
+# ── Security Factors ──
 
 
 @dataclass
-class TransferWhitelistItem:
-    """A whitelisted transfer address."""
-    whitelist_id: str = ""
+class SecurityFactorItem:
+    """A security factor entry (e.g. whitelisted address, IP allowlist)."""
+    factor_id: str = ""
+    factor_type: str = ""
     chain: str = ""
     address: str = ""
     label: str = ""
+    status: str = ""
+    reason: str = ""
     added_by: str = ""
     created_at: str = ""
 
 
 @dataclass
-class ListWhitelistResponse:
-    """Response for listing whitelisted addresses."""
-    items: List[TransferWhitelistItem] = field(default_factory=list)
+class ListSecurityFactorResponse:
+    """Response for listing security factors."""
+    items: List[SecurityFactorItem] = field(default_factory=list)
     total: int = 0

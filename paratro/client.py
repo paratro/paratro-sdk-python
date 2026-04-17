@@ -22,11 +22,11 @@ from paratro.models import (
     ListAssetsRequest,
     ListTransactionsRequest,
     ListWalletsRequest,
-    ListWhitelistResponse,
+    ListSecurityFactorResponse,
     PaginatedResponse,
     Transaction,
     TransferResponse,
-    TransferWhitelistItem,
+    SecurityFactorItem,
     Wallet,
 )
 from importlib.metadata import version as _pkg_version
@@ -184,60 +184,75 @@ class MPCClient:
         data = self._request("POST", "/api/v1/transfer", body=_to_body(req))
         return _from_dict(TransferResponse, data)
 
-    # ── Whitelist ──
+    # ── Security Factors ──
 
-    def list_whitelist(self, chain: Optional[str] = None) -> ListWhitelistResponse:
-        """List whitelisted transfer addresses.
+    def list_security_factors(self, chain: Optional[str] = None) -> ListSecurityFactorResponse:
+        """List security factors.
 
         Args:
             chain: Optional chain filter (e.g. "ETH", "BTC").
 
         Returns:
-            ListWhitelistResponse with items and total count.
+            ListSecurityFactorResponse with items and total count.
         """
         params: Dict[str, str] = {}
         if chain:
             params["chain"] = chain
-        data = self._request("GET", "/api/v1/whitelist", params=params)
-        items = [_from_dict(TransferWhitelistItem, item) for item in data.get("items", [])]
-        return ListWhitelistResponse(items=items, total=data.get("total", 0))
+        data = self._request("GET", "/api/v1/client/security-factors", params=params)
+        items = [_from_dict(SecurityFactorItem, item) for item in data.get("items", [])]
+        return ListSecurityFactorResponse(items=items, total=data.get("total", 0))
 
-    def add_whitelist(
+    def add_security_factor(
         self,
         chain: str,
         address: str,
         mfa_code: str,
         label: str = "",
-    ) -> TransferWhitelistItem:
-        """Add an address to the transfer whitelist.
+    ) -> SecurityFactorItem:
+        """Add a security factor.
 
         Args:
             chain: Blockchain network (e.g. "ETH", "BTC").
-            address: The address to whitelist.
+            address: The address to add.
             mfa_code: MFA / 2FA verification code.
             label: Optional human-readable label.
 
         Returns:
-            The created TransferWhitelistItem.
+            The created SecurityFactorItem.
         """
         body: Dict[str, Any] = {"chain": chain, "address": address, "mfa_code": mfa_code}
         if label:
             body["label"] = label
-        data = self._request("POST", "/api/v1/whitelist", body=body)
-        return _from_dict(TransferWhitelistItem, data)
+        data = self._request("POST", "/api/v1/client/security-factors", body=body)
+        return _from_dict(SecurityFactorItem, data)
 
-    def delete_whitelist(self, whitelist_id: str, mfa_code: str) -> None:
-        """Remove an address from the transfer whitelist.
+    def delete_security_factor(self, factor_id: str, mfa_code: str) -> None:
+        """Remove a security factor.
 
         Args:
-            whitelist_id: ID of the whitelist entry to remove.
+            factor_id: ID of the security factor to remove.
             mfa_code: MFA / 2FA verification code.
         """
         self._request(
             "DELETE",
-            f"/api/v1/whitelist/{whitelist_id}",
+            f"/api/v1/client/security-factors/{factor_id}",
             body={"mfa_code": mfa_code},
         )
+
+    def set_security_factor_status(self, factor_id: str, status: str, mfa_code: str) -> SecurityFactorItem:
+        """Update the status of a security factor.
+
+        Args:
+            factor_id: ID of the security factor.
+            status: New status value.
+            mfa_code: MFA / 2FA verification code.
+
+        Returns:
+            The updated SecurityFactorItem.
+        """
+        body: Dict[str, Any] = {"status": status, "mfa_code": mfa_code}
+        data = self._request("PUT", f"/api/v1/client/security-factors/{factor_id}/status", body=body)
+        return _from_dict(SecurityFactorItem, data)
 
     # ── Internal ──
 

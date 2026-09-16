@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `WebhookEvent.operation` — the message service now puts `operation` on every webhook event
+  (`TRANSFER` / `PROGRAM_CALL` / `CONTRACT_CALL` for `OUTBOUND`, `DEPOSIT` for deposits, `X402` for
+  `x402.settlement.confirmed`, `TRANSFER` for `transfer.credited`); `WebhookOperation` names the values.
+- `WebhookEvent.swap_incoming: Optional[SwapIncoming]` — the counter-asset leg of a `PROGRAM_CALL` /
+  `CONTRACT_CALL` swap on `transaction.confirmed` / `transaction.failed`: `token_address`, `symbol`,
+  `amount`, `decimals`, `booked`, `accounting_status` (`SwapAccountingStatus.APPLIED` /
+  `REVIEW_REQUIRED` / `NOT_APPLICABLE`) plus `reason` / `audit_type` when not booked. `None` on every
+  other event. `SwapIncoming`, `SwapAccountingStatus` and `WebhookOperation` are exported from `paratro`.
+
+Both fields are additive: payloads without them still parse (`operation == ""`, `swap_incoming is None`).
+
 ## 1.8.1 — 2026-09-15
 
 Aligns the SDK with the gateway's unified transactions entry. Everything below was verified against the

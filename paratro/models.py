@@ -528,8 +528,48 @@ class WebhookEventType:
 
 
 @dataclass
+class SwapIncoming:
+    """Counter-asset leg of a PROGRAM_CALL / CONTRACT_CALL swap (``swap_incoming``).
+
+    Reported on ``transaction.confirmed`` / ``transaction.failed`` whose ``operation``
+    is PROGRAM_CALL or CONTRACT_CALL (paratro-mpc-message ``webhook.SwapIncomingPayload``).
+    Credit your customer's target asset only when ``booked`` is True; the leg is never
+    reported a second time as an INBOUND deposit.
+    """
+    token_address: str = ""  # ERC-20 contract (EVM) or SPL mint (Solana)
+    symbol: str = ""  # as registered on Paratro; "" when the asset is not registered
+    # Smallest-unit amount that actually arrived on-chain; "0" when nothing arrived (swap
+    # reverted, or no credit to receive_address could be derived). Can be non-zero while
+    # booked is False: the funds arrived but were not credited — see reason.
+    amount: str = "0"
+    decimals: int = 0  # 0 when the asset is not registered
+    booked: bool = False  # True when the leg was credited to the asset balance
+    accounting_status: str = ""  # See SwapAccountingStatus
+    reason: Optional[str] = None  # only when booked is False
+    audit_type: Optional[str] = None  # only when booked is False and an operations audit exists (SWAP_INCOMING_*)
+
+
+class SwapAccountingStatus:
+    """``swap_incoming.accounting_status`` values."""
+
+    APPLIED = "APPLIED"  # the incoming leg was credited
+    REVIEW_REQUIRED = "REVIEW_REQUIRED"  # refused fail-closed; Paratro operations reconcile by hand
+    NOT_APPLICABLE = "NOT_APPLICABLE"  # transaction.failed: the swap reverted, nothing to book
+
+
+class WebhookOperation:
+    """``operation`` values of a webhook event (present on every event)."""
+
+    TRANSFER = "TRANSFER"  # plain withdrawal (OUTBOUND) and transfer.credited (INTERNAL)
+    PROGRAM_CALL = "PROGRAM_CALL"  # Solana swap (OUTBOUND)
+    CONTRACT_CALL = "CONTRACT_CALL"  # EVM swap (OUTBOUND)
+    DEPOSIT = "DEPOSIT"  # on-chain deposit (INBOUND transaction.*)
+    X402 = "X402"  # x402 facilitator settlement (x402.settlement.confirmed)
+
+
+@dataclass
 class WebhookEvent:
-    """Parsed webhook event payload (v2 schema, 26 fields)."""
+    """Parsed webhook event payload (v2 schema)."""
     event_id: str = ""
     event_type: str = ""  # See WebhookEventType
     event_time: str = ""
@@ -556,3 +596,9 @@ class WebhookEvent:
     risk_score: float = 0.0
     risk_level: str = ""
     data: str = ""
+    # Operation of the underlying transaction, on every event: see WebhookOperation.
+    # "" only from a message service that predates the field.
+    operation: str = ""
+    # Only on transaction.confirmed / transaction.failed whose operation is
+    # PROGRAM_CALL / CONTRACT_CALL; None on every other event.
+    swap_incoming: Optional[SwapIncoming] = None

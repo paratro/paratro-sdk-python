@@ -177,6 +177,12 @@ result = client.transactions.create(ContractCallRequest(
 The contract address is **not** a request field — the gateway takes it from the OPERATION_RULES policy
 (`call_rules.allowed_contracts[chain]`). Native value is always 0.
 
+Request amounts are smallest-unit integer strings (only `TRANSFER` amounts are in token units). Policy
+limits are authored per token in token units (`asset_rules.limits[chain][token]`, e.g. `"0.5"`); the
+gateway converts them with the token's registered decimals, checks registration before limits, and limit
+rejections quote both sides in token units (`limit_per_transaction: 1 CORZx exceeds per-transaction
+limit 0.5 CORZx`).
+
 Wire format sent for the request above:
 
 ```json
@@ -342,7 +348,9 @@ is the union of the two lists below, `ENGINE_FAILURE_TAGS` the engine verdicts, 
 
 The sets are the literals in the code at release time, not a closed vocabulary: a new gateway / engine
 release can add tags, and TSS / broadcast failures arrive without one (`engine rejected the
-transaction`). Match on the tags you handle and treat an unknown tag as a rejection you have not seen yet.
+transaction`). Match on the tags you handle and treat an unknown tag as a rejection you have not seen yet -
+for example `limit_invalid` (a per-token `asset_rules.limits` entry that does not convert to a whole number
+of smallest units) is not in `RejectionReason` yet, but `reason_tag` still returns it.
 
 The pre-1.8 predicates `is_not_found`, `is_rate_limited`, `is_auth_error` remain; `is_rejected`,
 `is_forbidden`, `is_endpoint_retired`, `is_service_unavailable`, `is_engine_busy`, `is_token_expired` were added.

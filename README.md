@@ -181,8 +181,9 @@ Request amounts are smallest-unit integer strings (only `TRANSFER` amounts are i
 limits are authored per token in token units (`asset_rules.limits[chain][token]`, e.g. `"0.5"`); the
 gateway converts them with the token's registered decimals, checks registration before limits, and limit
 rejections quote both sides in token units (`limit_per_transaction: 1 CORZx exceeds per-transaction
-limit 0.5 CORZx`). The leg that is limit-checked is the one you pay: `incoming` for CONTRACT_CALL, your
-outgoing `TransferChecked` for PROGRAM_CALL.
+limit 0.5 CORZx`). `limits` is the only place limits live - one entry per token you pay with, `single` and
+`daily` both required; a token without an entry is `limit_not_configured`. The leg that is limit-checked is
+the one you pay: `incoming` for CONTRACT_CALL, your outgoing `TransferChecked` for PROGRAM_CALL.
 
 Wire format sent for the request above:
 
@@ -324,16 +325,17 @@ rejected after the row was created); it is `None` when the gateway collapsed the
 `"engine rejected the transaction"`.
 
 **Rejection tags** (`RejectionReason`, verified against the gateway and verifier sources; `REJECTED_TAGS`
-is the union of the two lists below, `ENGINE_FAILURE_TAGS` the engine verdicts, `ALL_TAGS` everything):
+is the union of the two lists below plus the retired `limit_decimals_ambiguous`, `ENGINE_FAILURE_TAGS` the
+engine verdicts, `ALL_TAGS` everything):
 
 - CONTRACT_CALL: `abi` `amount_not_positive` `calldata` `calldata_not_canonical` `contract_address`
   `counterparty_not_registered` `expiration` `expiration_passed` `expiration_too_far` `incoming_from`
-  `limit_daily` `limit_decimals_ambiguous` `limit_not_configured` `limit_per_transaction` `outgoing_to`
+  `limit_daily` `limit_not_configured` `limit_per_transaction` `outgoing_to`
   `payment_token_not_registered` `permit_deadline` `permit_deadline_passed` `permit_deadline_too_far`
   `permit_owner` `selector` `target_token_not_registered` `value_not_zero`
 - PROGRAM_CALL: `account_unresolvable` `alt_not_allowed` `ata_derivation` `counterparty_not_registered`
   `counterparty_signature_invalid` `counterparty_signature_missing` `fee_payer` `incoming_destination`
-  `limit_daily` `limit_decimals_ambiguous` `limit_not_configured` `limit_per_transaction` `malformed`
+  `limit_daily` `limit_not_configured` `limit_per_transaction` `malformed`
   `mint_not_registered` `mint_program_unknown` `outgoing_authority` `outgoing_source`
   `payer_signature_present` `policy_invalid` `program_not_allowed` `program_unresolvable` `shape`
 - `400 transaction_failed` engine verdicts (`ENGINE_FAILURE_TAGS`, 38 values — every literal in
@@ -351,7 +353,11 @@ The sets are the literals in the code at release time, not a closed vocabulary: 
 release can add tags, and TSS / broadcast failures arrive without one (`engine rejected the
 transaction`). Match on the tags you handle and treat an unknown tag as a rejection you have not seen yet -
 for example `limit_invalid` (a per-token `asset_rules.limits` entry that does not convert to a whole number
-of smallest units) is not in `RejectionReason` yet, but `reason_tag` still returns it.
+of smallest units) is not in `RejectionReason` yet, but `reason_tag` still returns it. The opposite also
+happens: `RejectionReason.LIMIT_DECIMALS_AMBIGUOUS` stays for source compatibility, but the gateway no longer
+emits it - the policy-wide `single_limit` / `daily_limit` it guarded were removed on 2026-09-19, every token
+now has its own `asset_rules.limits` entry (one without an entry is `limit_not_configured`), and a policy
+that still carries the old keys is rejected as a whole with `403`.
 
 The pre-1.8 predicates `is_not_found`, `is_rate_limited`, `is_auth_error` remain; `is_rejected`,
 `is_forbidden`, `is_endpoint_retired`, `is_service_unavailable`, `is_engine_busy`, `is_token_expired` were added.

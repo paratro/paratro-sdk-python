@@ -181,7 +181,8 @@ Request amounts are smallest-unit integer strings (only `TRANSFER` amounts are i
 limits are authored per token in token units (`asset_rules.limits[chain][token]`, e.g. `"0.5"`); the
 gateway converts them with the token's registered decimals, checks registration before limits, and limit
 rejections quote both sides in token units (`limit_per_transaction: 1 CORZx exceeds per-transaction
-limit 0.5 CORZx`).
+limit 0.5 CORZx`). The leg that is limit-checked is the one you pay: `incoming` for CONTRACT_CALL, your
+outgoing `TransferChecked` for PROGRAM_CALL.
 
 Wire format sent for the request above:
 
@@ -302,7 +303,7 @@ except RejectedError as e:
     if e.reason_tag in (RejectionReason.EXPIRATION_PASSED, RejectionReason.EXPIRATION_TOO_FAR):
         ...  # get a fresh quote
     elif e.reason_tag in (RejectionReason.LIMIT_PER_TRANSACTION, RejectionReason.LIMIT_DAILY):
-        ...  # over the policy limit
+        ...  # the leg you pay (CONTRACT_CALL incoming / PROGRAM_CALL outgoing) is over the token's limit
     else:
         raise
 except ForbiddenError:

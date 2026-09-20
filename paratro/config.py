@@ -32,6 +32,15 @@ class Config:
 
 
 def validate_base_url(base_url: str) -> None:
-    """Raise ``ValueError(BASE_URL_ERROR)`` unless ``base_url`` is an absolute http(s) URL."""
+    """Raise ``ValueError(BASE_URL_ERROR)`` unless ``base_url`` is an absolute http(s) URL.
+
+    Same rule as the Go and Rust SDKs: ``http://`` or ``https://`` scheme
+    (case-sensitive) and a non-empty host, so ``"https://"`` and
+    ``"https:///path"`` are rejected here rather than as a connection error.
+    """
     if not base_url or not base_url.startswith(("http://", "https://")):
+        raise ValueError(BASE_URL_ERROR)
+    rest = base_url.split("://", 1)[1]
+    host = rest.split("/", 1)[0]
+    if not host or any(ch.isspace() for ch in host):
         raise ValueError(BASE_URL_ERROR)

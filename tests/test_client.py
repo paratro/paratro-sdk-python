@@ -175,3 +175,17 @@ def test_webhook_event_types_are_the_emitted_set():
     assert emitted == {"transaction.confirming", "transaction.confirmed", "transaction.failed",
                        "transfer.credited", "x402.settlement.confirmed"}
     assert WebhookEventType.X402_SETTLEMENT_CONFIRMED == "x402.settlement.confirmed"
+
+
+def test_base_url_requires_a_host() -> None:
+    """Same strictness as the Go/Rust SDKs: a scheme alone or an empty host is rejected."""
+    import pytest
+
+    from paratro.config import BASE_URL_ERROR, validate_base_url
+
+    for bad in ("https://", "https:///path", "http://", "https://gw example"):
+        with pytest.raises(ValueError, match="absolute http\\(s\\) URL"):
+            validate_base_url(bad)
+    for ok in ("https://gateway.example", "http://127.0.0.1:8080/", "https://mpcapi.example/api"):
+        validate_base_url(ok)
+    assert "paratro.com" not in BASE_URL_ERROR

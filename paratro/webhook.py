@@ -25,10 +25,10 @@ import hashlib
 import hmac
 import json
 import time
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from paratro.errors import APIError
-from paratro.models import WebhookEvent
+from paratro.models import SwapIncoming, WebhookEvent
 
 
 DEFAULT_TOLERANCE = 300  # 5 minutes
@@ -130,4 +130,22 @@ def parse_event(data: Dict[str, Any]) -> WebhookEvent:
         risk_score=data.get("risk_score", 0.0),
         risk_level=data.get("risk_level", ""),
         data=data.get("data", ""),
+        operation=data.get("operation", ""),
+        swap_incoming=_parse_swap_incoming(data.get("swap_incoming")),
+    )
+
+
+def _parse_swap_incoming(raw: Any) -> Optional[SwapIncoming]:
+    """Build the ``swap_incoming`` leg; ``None`` when the event carries none."""
+    if not isinstance(raw, dict):
+        return None
+    return SwapIncoming(
+        token_address=raw.get("token_address", ""),
+        symbol=raw.get("symbol", ""),
+        amount=raw.get("amount", "0"),
+        decimals=raw.get("decimals", 0),
+        booked=bool(raw.get("booked", False)),
+        accounting_status=raw.get("accounting_status", ""),
+        reason=raw.get("reason"),
+        audit_type=raw.get("audit_type"),
     )

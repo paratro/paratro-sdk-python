@@ -437,6 +437,12 @@ elif event.event_type == WebhookEventType.TRANSACTION_CONFIRMED: ...
 elif event.event_type == WebhookEventType.TRANSACTION_FAILED: ...
 elif event.event_type == WebhookEventType.TRANSFER_CREDITED: ...   # internal transfer credited, transaction_type=INTERNAL
 elif event.event_type == WebhookEventType.X402_SETTLEMENT_CONFIRMED: ...   # x402 settlement credited to the recipient
+
+# event.operation (WebhookOperation: TRANSFER / PROGRAM_CALL / CONTRACT_CALL / DEPOSIT / X402) says what
+# kind of movement this is. PROGRAM_CALL / CONTRACT_CALL swaps also carry the counter-asset leg:
+leg = event.swap_incoming                                   # SwapIncoming or None
+if leg is not None and leg.booked: ...                      # credit leg.amount (smallest unit) of leg.token_address
+elif leg is not None: ...                                   # not credited: see leg.reason / leg.audit_type
 ```
 
 | Event | Description |

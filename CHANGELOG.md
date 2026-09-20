@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 1.9.0 — 2026-09-20
+
+The gateway base URL is now required and explicit — Paratro cloud and private deployments are
+configured the same way — and webhook events expose the typed `operation` / `swap_incoming` fields.
+The package keeps its name and import path and stays in the 1.x line, but **1.9.0 is a breaking
+release**: read the ⚠️ Breaking section before upgrading.
 
 ### ⚠️ Breaking
 

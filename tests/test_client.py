@@ -27,7 +27,7 @@ from paratro.config import BASE_URL_ERROR
 
 
 def test_version():
-    assert __version__ == "1.8.1"
+    assert __version__ == "1.9.0"
 
 
 def test_config_has_no_environment_presets():

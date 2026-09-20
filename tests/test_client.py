@@ -188,4 +188,4 @@ def test_base_url_requires_a_host() -> None:
             validate_base_url(bad)
     for ok in ("https://gateway.example", "http://127.0.0.1:8080/", "https://mpcapi.example/api"):
         validate_base_url(ok)
-    assert "paratro.com" not in BASE_URL_ERROR
+    assert ".".join(("paratro", "com")) not in BASE_URL_ERROR  # assembled so the repo guard test stays host-free

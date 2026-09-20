@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional, Tuple, Type, TypeVar
 
 import requests
 
-from paratro.config import Config
+from paratro.config import Config, validate_base_url
 from paratro.errors import APIError, ErrorCode
 from paratro.models import (
     Account,
@@ -74,7 +74,7 @@ class MPCClient:
 
         from paratro import MPCClient, Config, TransferRequest
 
-        client = MPCClient("api_key", "api_secret", Config.sandbox())
+        client = MPCClient("api_key", "api_secret", Config("https://<gateway-host>"))
 
         result = client.transactions.create(TransferRequest(
             from_address="0xYourVault...",
@@ -84,6 +84,11 @@ class MPCClient:
             amount="10.5",
             reference_id="order-1001",
         ))
+
+    ``Config`` takes the base URL of the gateway you were given — the Paratro
+    cloud endpoint or your private deployment; the SDK has no default. It must be
+    an absolute ``http://`` / ``https://`` URL, otherwise the constructor raises
+    ``ValueError`` (see ``paratro.config.BASE_URL_ERROR``).
 
     Authentication is automatic: the first call exchanges the API key/secret for
     a JWT at ``POST /api/v1/auth/token``; the token is refreshed before
@@ -105,6 +110,7 @@ class MPCClient:
             raise ValueError("api_secret is required")
         if config is None:
             raise ValueError("config is required")
+        validate_base_url(config.base_url)
 
         self._config = config
         self._api_key = api_key

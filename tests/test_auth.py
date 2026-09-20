@@ -120,9 +120,9 @@ def test_non_json_error_body(gateway, client):
 
 def test_constructor_validation():
     with pytest.raises(ValueError, match="api_key"):
-        MPCClient("", "secret", Config.sandbox())
+        MPCClient("", "secret", Config("https://gateway.example"))
     with pytest.raises(ValueError, match="api_secret"):
-        MPCClient("key", "", Config.sandbox())
+        MPCClient("key", "", Config("https://gateway.example"))
     with pytest.raises(ValueError, match="config"):
         MPCClient("key", "secret", None)  # type: ignore[arg-type]
 
@@ -136,8 +136,8 @@ def test_default_timeout_covers_the_gateway_engine_budget():
     from paratro import DEFAULT_TIMEOUT
     assert DEFAULT_TIMEOUT == 200
     assert DEFAULT_TIMEOUT > 180
-    assert MPCClient("key", "secret", Config.sandbox())._timeout == 200
-    assert MPCClient("key", "secret", Config.sandbox(), timeout=7)._timeout == 7
+    assert MPCClient("key", "secret", Config("https://gateway.example"))._timeout == 200
+    assert MPCClient("key", "secret", Config("https://gateway.example"), timeout=7)._timeout == 7
 
 
 def test_configured_timeout_bounds_the_request():
@@ -152,7 +152,7 @@ def test_configured_timeout_bounds_the_request():
     srv.bind(("127.0.0.1", 0))
     srv.listen(1)
     try:
-        client = MPCClient("key", "secret", Config.custom(f"http://127.0.0.1:{srv.getsockname()[1]}"), timeout=0.3)
+        client = MPCClient("key", "secret", Config(f"http://127.0.0.1:{srv.getsockname()[1]}"), timeout=0.3)
         started = time.monotonic()
         with pytest.raises(requests.exceptions.Timeout):
             client.transactions.get("tx-timeout")

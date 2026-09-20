@@ -17,27 +17,48 @@ from paratro import (
     CreateWalletRequest,
     ListAccountsRequest,
     ListAssetsRequest,
+    MPCClient,
     WebhookEventType,
     __version__,
     parse_event,
     verify_signature,
 )
+from paratro.config import BASE_URL_ERROR
 
 
 def test_version():
     assert __version__ == "1.8.1"
 
 
-def test_config_sandbox():
-    assert Config.sandbox().base_url == "https://api-sandbox.paratro.com"
+def test_config_has_no_environment_presets():
+    # 1.9.0: the gateway base URL is always passed explicitly — Paratro cloud and private
+    # deployments alike — so the SDK carries no address and no preset.
+    for preset in ("sandbox", "production", "custom"):
+        assert not hasattr(Config, preset), preset
 
 
-def test_config_production():
-    assert Config.production().base_url == "https://api.paratro.com"
+def test_config_strips_trailing_slash():
+    assert Config("http://localhost:8080/").base_url == "http://localhost:8080"
+    assert Config("http://localhost:8080///").base_url == "http://localhost:8080"
+    assert Config("https://gateway.example").base_url == "https://gateway.example"
+    assert repr(Config("https://gateway.example")) == "Config(base_url='https://gateway.example')"
 
 
-def test_config_custom_strips_trailing_slash():
-    assert Config.custom("http://localhost:8080/").base_url == "http://localhost:8080"
+@pytest.mark.parametrize("bad", ["", "gateway.example", "//gateway.example", "ftp://gateway.example",
+                                 "https://", "http:/gateway.example", None])
+def test_client_rejects_a_base_url_that_is_not_absolute_http(bad):
+    config = Config(bad)  # building the Config never raises …
+    with pytest.raises(ValueError) as ei:
+        MPCClient("key", "secret", config)  # … creating the client does
+    assert str(ei.value) == BASE_URL_ERROR
+    assert str(ei.value).startswith("base URL must be an absolute http(s) URL")
+
+
+@pytest.mark.parametrize("url", ["http://127.0.0.1:1", "https://gateway.example/", "https://gateway.example/v1"])
+def test_client_accepts_absolute_http_urls_without_touching_the_network(url):
+    client = MPCClient("key", "secret", Config(url))
+    assert client._config.base_url == url.rstrip("/")
+    client._session.close()
 
 
 # ── wallets / accounts / assets ──

@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+### ⚠️ Breaking
+
+- **The gateway base URL is required and always explicit.** `Config.sandbox()`, `Config.production()`
+  and `Config.custom()` are removed; `Config(base_url)` is the only constructor. Paratro now runs
+  private deployments next to its cloud, so the SDK carries no gateway address of its own — the
+  Paratro cloud endpoints are listed only in the README (Configuration) and in this migration table:
+
+  | 1.8.1 | 1.9.0 |
+  |---|---|
+  | `Config.sandbox()` | `Config("https://api-sandbox.paratro.com")` |
+  | `Config.production()` | `Config("https://api.paratro.com")` |
+  | `Config.custom("https://your-gateway")` | `Config("https://your-gateway")` |
+  | private deployment | `Config("https://<gateway-host>")` — the address your operations team gives you |
+
+- `MPCClient(...)` validates the base URL: it must be non-empty and start with `http://` or `https://`
+  (a trailing slash is dropped); otherwise the constructor raises
+  `ValueError("base URL must be an absolute http(s) URL, e.g. https://<gateway-host> (Paratro cloud or your private gateway)")`
+  (`paratro.config.BASE_URL_ERROR`). Building the `Config` itself never raises. Same rule in the Go
+  and Rust SDKs (`paratro.NewConfig(baseURL)` / `Config::new(base_url)`).
+- `examples/_env.py` requires `PARATRO_BASE_URL` (it used to default to the Paratro sandbox).
+
 ### Added
 
 - `WebhookEvent.operation` — the message service now puts `operation` on every webhook event

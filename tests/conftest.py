@@ -133,7 +133,7 @@ def gateway():
 
 @pytest.fixture
 def client(gateway: FakeGateway):
-    c = MPCClient("fixture-key", "fixture-secret", Config.custom(gateway.base_url))
+    c = MPCClient("fixture-key", "fixture-secret", Config(gateway.base_url))
     c._session.trust_env = False
     try:
         yield c

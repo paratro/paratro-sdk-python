@@ -95,6 +95,34 @@ def test_readme_403_row_mentions_address_blacklisted():
     assert "address_blacklisted" in readme
 
 
+# 1.9.0: the SDK carries no gateway address. The Paratro cloud endpoints are documented in the
+# README / CHANGELOG tables only; everything under paratro/, examples/ and tests/ stays host-free
+# and free of the removed environment presets.
+_PRESET_CALL = re.compile(r"Config\.(sandbox|production|custom)\(")
+_NO_HOST_IN_CODE = [re.compile(r"paratro[.]com"), _PRESET_CALL]
+_CODE_DIRS = ("paratro", "examples", "tests")
+
+
+def test_code_dirs_carry_no_gateway_address_and_no_environment_preset():
+    offenders = []
+    for d in _CODE_DIRS:
+        for path in sorted((ROOT / d).glob("*.py")):
+            for lineno, line in enumerate(_text(path).splitlines(), 1):
+                if any(rx.search(line) for rx in _NO_HOST_IN_CODE):
+                    offenders.append(f"{path.relative_to(ROOT)}:{lineno}: {line.strip()}")
+    assert not offenders, "\n".join(offenders)
+
+
+def test_readme_configures_the_gateway_explicitly():
+    readme = _text(ROOT / "README.md")
+    assert 'Config("https://<gateway-host>")' in readme
+    assert "## Configuration" in readme and "Private deployment" in readme
+    # Presets survive only as the "before" column of the migration table.
+    for lineno, line in enumerate(readme.splitlines(), 1):
+        if _PRESET_CALL.search(line):
+            assert line.startswith(("|", ">")), f"README.md:{lineno}: {line.strip()}"
+
+
 def test_transaction_status_in_flight_rule():
     for done in ("CANCELLED", "REJECTED", "COMPLIANCE_BLOCKED", "FAILED", "CONFIRMED",
                  "BROADCAST", "CONFIRMING", "SOMETHING_NEW"):   # unknown never spins a poll loop

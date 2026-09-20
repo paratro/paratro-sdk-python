@@ -6,10 +6,13 @@
 
 Official Python SDK for the [Paratro](https://paratro.com) MPC Wallet Gateway.
 
-> **1.8.1 is not a purely additive release.** `POST /api/v1/transfer` and `POST /api/v1/x402/sign` were
-> retired by the gateway (HTTP 410). All transactions now go through `POST /api/v1/transactions` with an
-> `operation` field. See [Migrating from 1.6 and earlier](#migrating-from-16-and-earlier) and the
-> **⚠️ Breaking** section of [CHANGELOG.md](CHANGELOG.md).
+> **1.9.0 is a breaking release: the gateway base URL is now required.** `Config.sandbox()` /
+> `Config.production()` / `Config.custom()` are gone; pass the gateway explicitly as
+> `Config("https://<gateway-host>")` — see [Configuration](#configuration) and
+> [Migrating from 1.8](#migrating-from-18). 1.8.1 already retired `POST /api/v1/transfer` and
+> `POST /api/v1/x402/sign` (HTTP 410): every transaction goes through `POST /api/v1/transactions` with an
+> `operation` field, see [Migrating from 1.6 and earlier](#migrating-from-16-and-earlier) and the
+> **⚠️ Breaking** sections of [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
@@ -38,7 +41,7 @@ pip install paratro-sdk
 ```python
 from paratro import MPCClient, Config, TransferRequest, APIError
 
-client = MPCClient("your-api-key", "your-api-secret", Config.sandbox())
+client = MPCClient("your-api-key", "your-api-secret", Config("https://<gateway-host>"))
 
 result = client.transactions.create(TransferRequest(
     from_address="0xYourVaultAddress",
@@ -55,17 +58,30 @@ print(tx.status, tx.tx_hash)
 ```
 
 Runnable versions of every snippet below live in [`examples/`](examples/) and are executed by the test
-suite against a fake gateway (`tests/test_examples.py`).
+suite against a fake gateway (`tests/test_examples.py`). They read `PARATRO_API_KEY`, `PARATRO_API_SECRET`
+and `PARATRO_BASE_URL` from the environment (`examples/_env.py`).
 
 ## Configuration
 
 ```python
 from paratro import Config
 
-Config.sandbox()                          # https://api-sandbox.paratro.com
-Config.production()                       # https://api.paratro.com
-Config.custom("https://your-gateway")     # anything else
+Config("https://<gateway-host>")     # the gateway base URL — always explicit, no default, no presets
 ```
+
+`Config` takes exactly one argument: the base URL of the gateway you were given. It must be an absolute
+`http://` / `https://` URL (a trailing slash is dropped); anything else makes `MPCClient(...)` raise
+`ValueError("base URL must be an absolute http(s) URL, …")` before any request is sent. Building the
+`Config` itself never raises. Paratro cloud and private deployments are configured the same way:
+
+| Deployment | Base URL |
+|---|---|
+| Paratro cloud — sandbox | `https://api-sandbox.paratro.com` |
+| Paratro cloud — production | `https://api.paratro.com` |
+| Private deployment | the gateway address your operations team gives you |
+
+The SDK itself carries no gateway address; this table is the only place the Paratro cloud endpoints
+appear.
 
 ### HTTP timeout
 
@@ -458,6 +474,18 @@ elif leg is not None: ...                                   # not credited: see 
 `to_addr` (`to`), `symbol`, `contract_address`, `amount`, `decimals`, `confirmations`,
 `required_confirmations`, `created_at`, `confirmed_at`, `risk_checked`, `risk_score`, `risk_level`, `data`
 
+## Migrating from 1.8
+
+1.9.0 removes the environment presets: the gateway base URL is passed explicitly, the same way for the
+Paratro cloud and for a private deployment. Nothing else in the API changed.
+
+| 1.8.1 | 1.9.0 |
+|---|---|
+| `Config.sandbox()` / `Config.production()` | `Config("https://<gateway-host>")` — the address from the table in [Configuration](#configuration) |
+| `Config.custom("https://your-gateway")` | `Config("https://your-gateway")` |
+| `MPCClient(key, secret, Config.custom(url))` | `MPCClient(key, secret, Config(url))` |
+| bad base URL → connection error on the first call | `MPCClient(...)` raises `ValueError` (empty, or not an absolute `http(s)` URL) |
+
 ## Migrating from 1.6 and earlier
 
 The package name and import path do not change (`pip install -U paratro-sdk`, `from paratro import …`).
@@ -467,7 +495,7 @@ The package name and import path do not change (`pip install -U paratro-sdk`, `f
 | `client.create_transfer(CreateTransferRequest(...))` → `POST /api/v1/transfer` | still works, now sends `POST /api/v1/transactions` with `operation=TRANSFER`. New code: `client.transactions.create(TransferRequest(...))` |
 | `POST /api/v1/x402/sign` | retired by the gateway (410). No replacement in the API; `operation=X402` on the unified entry answers `400 Unsupported operation` |
 | `Transaction.direction / block_number / confirmations` | removed (never returned by the gateway); `risk_score`, `risk_level` added |
-| `list_security_factors / add_security_factor / delete_security_factor / set_security_factor_status` | removed — these are portal (`appapi`) endpoints authenticated with a portal user session, not gateway API-key endpoints; they never worked against `Config.sandbox()/production()` |
+| `list_security_factors / add_security_factor / delete_security_factor / set_security_factor_status` | removed — these are portal (`appapi`) endpoints authenticated with a portal user session, not gateway API-key endpoints; they never worked against the gateway API, whatever the base URL |
 | `TransferResponse` | alias of `CreateTransactionResponse` (adds `tx_hash`, `http_status`, `operation`, `accepted`) |
 | `MPCClient(..., timeout=30)` implicit 1.6 default | default is now `200` (`paratro.DEFAULT_TIMEOUT`, above the gateway's 180 s write timeout); pass `timeout=` to change it |
 | `APIError` | unchanged attributes; typed subclasses and `reason_tag` added |
